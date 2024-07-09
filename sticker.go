@@ -55,6 +55,7 @@ type StickerSet struct {
 type InputSticker struct {
 	File
 	Sticker      string        `json:"sticker"`
+	Format       string        `json:"format"`
 	MaskPosition *MaskPosition `json:"mask_position"`
 	Emojis       []string      `json:"emoji_list"`
 	Keywords     []string      `json:"keywords"`
@@ -198,6 +199,7 @@ func (b *Bot) SetStickerSetThumb(of Recipient, set *StickerSet) error {
 	params := map[string]string{
 		"user_id":   of.Recipient(),
 		"name":      set.Name,
+		"format":    set.Format,
 		"thumbnail": repr,
 	}
 
@@ -303,4 +305,30 @@ func (b *Bot) SetCustomEmojiStickerSetThumb(name, id string) error {
 
 	_, err := b.Raw("setCustomEmojiStickerSetThumbnail", params)
 	return err
+}
+
+// ReplaceStickerInSet returns True on success, if existing sticker was replaced with a new one
+func (b *Bot) ReplaceStickerInSet(of Recipient, name, oldSticker string, sticker InputSticker) (bool, error) {
+	files := make(map[string]File)
+
+	repr := sticker.File.process("0", files)
+	if repr == "" {
+		return false, errors.New("telebot: sticker does not exist")
+	}
+	sticker.Sticker = repr
+
+	data, err := json.Marshal(sticker)
+	if err != nil {
+		return false, err
+	}
+
+	params := map[string]string{
+		"user_id":     of.Recipient(),
+		"name":        name,
+		"old_sticker": oldSticker,
+		"sticker":     string(data),
+	}
+
+	_, err = b.sendFiles("replaceStickerInSet", files, params)
+	return true, err
 }

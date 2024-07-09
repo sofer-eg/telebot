@@ -2,7 +2,11 @@ package telebot
 
 import (
 	"encoding/json"
+	"math"
 )
+
+// Alias for math.MaxInt32
+const LiveForever = math.MaxInt32
 
 // Media is a generic type for all kinds of media that includes File.
 type Media interface {
@@ -30,6 +34,30 @@ type InputMedia struct {
 	Streaming            bool     `json:"supports_streaming,omitempty"`
 	DisableTypeDetection bool     `json:"disable_content_type_detection,omitempty"`
 	HasSpoiler           bool     `json:"is_spoiler,omitempty"`
+}
+
+type InputPaidMedia struct {
+	Type              string `json:"type"`
+	Media             string `json:"media"`
+	Thumbnail         string `json:"thumbnail,omitempty"`
+	Width             int    `json:"width,omitempty"`
+	Height            int    `json:"height,omitempty"`
+	Duration          int    `json:"duration,omitempty"`
+	SupportsStreaming bool   `json:"supports_streaming"`
+}
+
+type PaidMediaInfo struct {
+	StarCount int         `json:"star_count"`
+	PaidMedia []PaidMedia `json:"paid_media"`
+}
+
+type PaidMedia struct {
+	Type     string      `json:"type"`
+	Photo    []photoSize `json:"photo,omitempty"`
+	Video    Video       `json:"video,omitempty"`
+	Width    int         `json:"width,omitempty"`
+	Height   int         `json:"height,omitempty"`
+	Duration int         `json:"duration,omitempty"`
 }
 
 // Inputtable is a generic type for all kinds of media you
@@ -67,9 +95,10 @@ func (a Album) SetCaption(caption string) {
 type Photo struct {
 	File
 
-	Width   int    `json:"width"`
-	Height  int    `json:"height"`
-	Caption string `json:"caption,omitempty"`
+	Width                 int    `json:"width"`
+	Height                int    `json:"height"`
+	Caption               string `json:"caption,omitempty"`
+	ShowCaptionAboveMedia bool   `json:"show_caption_above_media,omitempty"`
 }
 
 type photoSize struct {
@@ -196,11 +225,12 @@ type Video struct {
 	Duration int `json:"duration,omitempty"`
 
 	// (Optional)
-	Caption   string `json:"caption,omitempty"`
-	Thumbnail *Photo `json:"thumbnail,omitempty"`
-	Streaming bool   `json:"supports_streaming,omitempty"`
-	MIME      string `json:"mime_type,omitempty"`
-	FileName  string `json:"file_name,omitempty"`
+	Caption               string `json:"caption,omitempty"`
+	Thumbnail             *Photo `json:"thumbnail,omitempty"`
+	Streaming             bool   `json:"supports_streaming,omitempty"`
+	MIME                  string `json:"mime_type,omitempty"`
+	FileName              string `json:"file_name,omitempty"`
+	ShowCaptionAboveMedia bool   `json:"show_caption_above_media,omitempty"`
 }
 
 func (v *Video) MediaType() string {
@@ -232,10 +262,11 @@ type Animation struct {
 	Duration int `json:"duration,omitempty"`
 
 	// (Optional)
-	Caption   string `json:"caption,omitempty"`
-	Thumbnail *Photo `json:"thumbnail,omitempty"`
-	MIME      string `json:"mime_type,omitempty"`
-	FileName  string `json:"file_name,omitempty"`
+	Caption               string `json:"caption,omitempty"`
+	Thumbnail             *Photo `json:"thumbnail,omitempty"`
+	MIME                  string `json:"mime_type,omitempty"`
+	FileName              string `json:"file_name,omitempty"`
+	ShowCaptionAboveMedia bool   `json:"show_caption_above_media,omitempty"`
 }
 
 func (a *Animation) MediaType() string {
@@ -341,6 +372,10 @@ type Location struct {
 	// Period in seconds for which the location will be updated
 	// (see Live Locations, should be between 60 and 86400.)
 	LivePeriod int `json:"live_period,omitempty"`
+
+	// (Optional) Unique identifier of the business connection
+	// on behalf of which the message to be edited was sent
+	BusinessConnectionID string `json:"business_connection_id"`
 }
 
 // Venue object represents a venue location with name, address and

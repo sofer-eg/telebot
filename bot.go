@@ -1265,6 +1265,51 @@ func (b *Bot) botInfo(language, key string) (*BotInfo, error) {
 	var resp struct {
 		Result *BotInfo
 	}
+
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, wrapError(err)
+	}
+	return resp.Result, nil
+}
+
+func (b *Bot) GetStarTransactions(offset, limit int) ([]StarTransaction, error) {
+	params := map[string]int{
+		"offset": offset,
+		"limit":  limit,
+	}
+
+	data, err := b.Raw("getStarTransactions", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		Result struct {
+			Transactions []StarTransaction `json:"transactions"`
+		}
+	}
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, wrapError(err)
+	}
+	return resp.Result.Transactions, nil
+}
+
+// BusinessConnection use this method to get information about the connection of the bot with a business account.
+// Returns a BusinessConnection object on success.
+func (b *Bot) BusinessConnection(connectionID string) (*BusinessConnection, error) {
+	params := map[string]string{
+		"business_connection_id": connectionID,
+	}
+
+	data, err := b.Raw("getBusinessConnection", params)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		Result *BusinessConnection
+	}
+
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, wrapError(err)
 	}
@@ -1279,4 +1324,19 @@ func extractEndpoint(endpoint interface{}) string {
 		return end.CallbackUnique()
 	}
 	return ""
+}
+
+// RefundStars returns a successful payment in Telegram Stars.
+func (b *Bot) RefundStars(to Recipient, chargeID string) error {
+	params := map[string]string{
+		"user_id":                    to.Recipient(),
+		"telegram_payment_charge_id": chargeID,
+	}
+
+	_, err := b.Raw("refundStarPayment", params)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
